@@ -1,0 +1,17 @@
+import numpy as np
+import pandas as pd
+
+import pylab as plt
+import matplotlib.pyplot as plt
+import seaborn as sns
+import math
+import os
+import itertools
+
+csf_data = pd.read_csv("CSF_normalized.csv",header=None)
+feci_data = pd.read_csv("feci_normalized.csv",header=None)
+pls_data = pd.read_csv("PLS_normalized.csv",header=None)
+
+filtered_pls = pd.read_csv("Filtered Metabolomics - Plasma.csv",header=None)
+filtered_feci = pd.read_csv("Filtered Metabolomics - Feci.csv",header=None)
+filtered_csf = pd.read_csv("Filtered Metabolomics - CSF.csv",header=None)
