@@ -1,0 +1,56 @@
+#create CSV files with Spearman coefficents
+
+import csv
+import itertools
+import pandas as pd
+from scipy.stats import spearmanr
+
+def combinations(file_name):
+    # Load file
+    df = pd.read_csv(file_name, header=None)
+    
+    # Extract the list of names from first column skipping header and label rows
+    names = df.iloc[2:, 0].tolist()
+    
+    # Generate all 2-element combinations
+    pairs = list(itertools.combinations(names, 2))
+    
+    results = []
+    for name1, name2 in pairs:
+        # Get row data (exclude first column) for each name
+        row1 = df[df.iloc[:, 0] == name1].iloc[0, 1:].astype(float)
+        row2 = df[df.iloc[:, 0] == name2].iloc[0, 1:].astype(float)
+        #print(row1)
+        
+        # Calculate Spearman correlation
+        corr, _ = spearmanr(row1, row2)
+        
+        # Names + correlation
+        results.append((name1, name2, corr))
+    
+    # output CSV --> three columns
+    output_file = f"COMBINATIONS_{file_name}"
+    with open(output_file, "w", newline='', encoding="utf-8") as outfile:
+        writer = csv.writer(outfile)
+        writer.writerow(["Metabolite 1", "Metabolite 2", "Spearman Coefficient"])
+        writer.writerows(results)
+    
+    print(f" {output_file} has {len(results)} pairs.")
+
+# Example usage:
+#combinations("csf_LPS_CTRL_filtered.csv")
+
+
+#------------------------------------------------------------------------------------------
+    
+
+combinations("csf_LPS_CTRL_filtered.csv")
+combinations("csf_VECPAC_CTRL_filtered.csv")
+combinations("csf_DSS_CTRL_filtered.csv")
+combinations("pls_LPS_CTRL_filtered.csv")
+combinations("pls_VECPAC_CTRL_filtered.csv")
+combinations("pls_DSS_CTRL_filtered.csv")
+combinations("feci_LPS_CTRL_filtered.csv")
+combinations("feci_VECPAC_CTRL_filtered.csv")
+combinations("feci_DSS_CTRL_filtered.csv")
+
