@@ -1,0 +1,99 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+from scipy.stats import spearmanr  # NEW
+
+def overallFunc(permutations_file, metabolite_data, x_range, y_range):
+    # Files
+    combinations_df = pd.read_csv(permutations_file)  # File containing combinations
+    csf_filtered = pd.read_csv(metabolite_data)      # File with metabolite data
+
+    # Store all these scatterplots in a folder called permutations_file + "_range_" + x_value + "_to_" + y_value
+    # Create output directory
+    out_dir = f"{os.path.splitext(permutations_file)[0]}_range_{x_range}_to_{y_range}"
+    
+    os.makedirs(out_dir, exist_ok=True)
+
+    #get rows from permutations_file that have third column between x_range and y_range
+    filtered_rows = combinations_df[
+        (combinations_df.iloc[:, 2] >= x_range) & (combinations_df.iloc[:, 2] <= y_range)
+    ]
+
+    #For each row that was filtered out (start loop):
+    for idx, row in filtered_rows.iterrows():
+
+        #From those filtered rows, get the first column value. Let that value be metabolite_1
+        #From those filtered rows, get the second column value. Let that value be metabolite_2
+        metabolite_1 = row[0]
+        metabolite_2 = row[1]
+
+        try:
+            #Find metabolite_1 in the first column metabolite_data file. Store all floats in that row except first column in list1
+            #Find metabolite_2 in the first column metabolite_data file. Store all floats in that row except first column in list2
+            list1 = csf_filtered[csf_filtered.iloc[:, 0] == metabolite_1].iloc[0, 1:].astype(float).tolist()
+            list2 = csf_filtered[csf_filtered.iloc[:, 0] == metabolite_2].iloc[0, 1:].astype(float).tolist()
+        except IndexError:
+            print(f"Skipping pair: {metabolite_1}, {metabolite_2} (not found)")
+            continue
+
+        #create a scatter plot using list1 as x-coordinate and list2 as y-coordinate. 
+        #--> Example: list1=[5,2,6] and list2=[9,3,6]. Plot scatterplot at points (5,9) and (2,3) and (6,6)
+        plt.figure()
+        plt.scatter(list1, list2)
+        plt.xlabel(metabolite_1)
+        plt.ylabel(metabolite_2)
+        plt.title(f"{metabolite_1} vs {metabolite_2}")
+
+    #Print spearman coefficient value
+        # Add Spearman correlation coefficient from third column
+        spearman_corr = row[2]
+        # manually calculate Spearman correlation manually from list1 and list2
+        computed_corr, _ = spearmanr(list1, list2)
+
+        plt.text(
+            0.05, 0.95,
+            f"Spearman ρ (file): {row[2]:.2f}\nSpearman ρ (calc): {computed_corr:.2f}",
+            transform=plt.gca().transAxes,  # use axes coordinates so it stays in The top left
+            fontsize=10,
+            verticalalignment='top',
+            bbox=dict(facecolor='white', alpha=0.7)
+        )
+
+        # Save the plot
+        filename = f"{metabolite_1}_vs_{metabolite_2}.png".replace("/", "_")
+        plt.savefig(os.path.join(out_dir, filename))
+        plt.close()
+
+
+    
+
+file_pairs = [
+    ("COMBINATIONS_csf_DSS_CTRL_filtered.csv", "csf_filtered.csv"),
+    ("COMBINATIONS_csf_LPS_CTRL_filtered.csv", "csf_filtered.csv"),
+    ("COMBINATIONS_csf_VECPAC_CTRL_filtered.csv", "csf_filtered.csv"),
+    ("COMBINATIONS_feci_DSS_CTRL_filtered.csv", "feci_filtered.csv"),
+    ("COMBINATIONS_feci_LPS_CTRL_filtered.csv", "feci_filtered.csv"),
+    ("COMBINATIONS_feci_VECPAC_CTRL_filtered.csv", "feci_filtered.csv"),
+    ("COMBINATIONS_pls_DSS_CTRL_filtered.csv", "pls_filtered.csv"),
+    ("COMBINATIONS_pls_LPS_CTRL_filtered.csv", "pls_filtered.csv"),
+    ("COMBINATIONS_pls_VECPAC_CTRL_filtered.csv", "pls_filtered.csv"),
+]
+
+# Ranges
+ranges = [
+    (-1.0, -0.9),
+    (-0.9, -0.75),
+    (-0.75, -0.5),
+    (-0.5, -0.25),
+    (-0.25, 0),
+    (0, 0.25),
+    (0.25, 0.5),
+    (0.5, 0.75),
+    (0.75, 0.9),
+    (0.9, 1.0)
+]
+
+# Run for all combinations
+for perm_file, meta_file in file_pairs:
+    for x, y in ranges:
+        overallFunc(perm_file, meta_file, x, y)
